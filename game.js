@@ -170,11 +170,14 @@ class Enemy {
     this.y = y;
     this.w = settings.enemy.w;
     this.h = settings.enemy.h;
-    this.speed = 3;
     this.row = row;
   }
 
-  update() {}
+  update() {
+    if (state.frame % 100 === this.row) {
+      this.x += this.speed;
+    }
+  }
 
   draw() {
     ctx.fillStyle = "green";
@@ -182,10 +185,47 @@ class Enemy {
   }
 }
 
+class EnemyRow {
+  constructor(row) {
+    const enemies = [];
+    const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
+    for (let i = 0; i < 11; i++) {
+      enemies.push(
+        new Enemy(
+          i * w + i * gapX + offsetX,
+          row * h + row * gapY + offsetY,
+          row
+        )
+      );
+    }
+    this.row = row;
+    this.enemies = enemies;
+    this.left = enemies[0].x;
+    this.right = enemies[10].x + enemies[10].w;
+    this.speed = 25;
+  }
+
+  update() {}
+
+  draw() {
+    for (let i = 0; i < this.enemies.length; i++) {
+      if (!this.enemies[i]) continue;
+      this.enemies[i].update();
+      this.enemies[i].draw();
+    }
+  }
+
+  cleanup() {
+    this.enemies = this.enemies.map((e) =>
+      e === null || e.destroy ? null : e
+    );
+  }
+}
+
 const state = {
   player: new Player(),
   projectiles: [],
-  enemies: [],
+  enemyRows: [],
   frame: 0,
 };
 
@@ -201,12 +241,7 @@ const settings = {
 };
 
 (function initialize() {
-  const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
-  for (let i = 0; i < 5; i++)
-    for (let j = 0; j < 11; j++)
-      state.enemies.push(
-        new Enemy(j * w + j * gapX + offsetX, i * h + i * gapY + offsetY, i)
-      );
+  for (let i = 0; i < 5; i++) state.enemyRows.push(new EnemyRow(i));
 })();
 
 function handleObjects() {
@@ -219,10 +254,10 @@ function handleObjects() {
     projectile.draw();
   }
 
-  for (let i = 0; i < state.enemies.length; i++) {
-    const enemy = state.enemies[i];
-    enemy.update();
-    enemy.draw();
+  for (let i = 0; i < state.enemyRows.length; i++) {
+    const row = state.enemyRows[i];
+    row.update();
+    row.draw();
   }
 }
 
@@ -234,5 +269,7 @@ function cleanupObjects() {
 (function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   handleObjects();
+  cleanupObjects();
+  state.frame++;
   requestAnimationFrame(animate);
 })();
