@@ -159,6 +159,15 @@ class Projectile {
   update() {
     this.y += this.speed;
     this.destroy = this.y < 0 || this.y > canvas.height;
+    state.shields.forEach((shield) => {
+      shield.parts.forEach((part) => {
+        if (this.destroy) return;
+        if (isCircleRectColliding(this, part)) {
+          this.destroy = true;
+          part.destroy = true;
+        }
+      });
+    });
     const { player, enemies } = this.collideWith;
     if (player && isCircleRectColliding(this, state.player)) {
       state.player.destroy = true;
@@ -166,6 +175,7 @@ class Projectile {
     }
     if (!enemies) return;
     state.enemies.forEach((enemy) => {
+      if (this.destroy) return;
       if (isCircleRectColliding(this, enemy)) {
         enemy.destroy = true;
         this.destroy = true;
@@ -218,11 +228,44 @@ class Enemy {
   }
 }
 
+class Shield {
+  constructor(x, y) {
+    this.parts = [];
+    for (let i = 0; i < 6; i++)
+      for (let j = 0; j < 6; j++)
+        this.parts.push(new ShieldPart(x + i * 10, y + j * 10));
+  }
+
+  draw() {
+    ctx.fillStyle = "white";
+    this.parts.forEach((part) => {
+      part.draw();
+    });
+  }
+
+  update() {}
+}
+
+class ShieldPart {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.w = 10;
+    this.h = 10;
+    this.destroy = false;
+  }
+
+  draw() {
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
 const state = {
   player: new Player(),
   projectiles: [],
   enemies: [],
   frame: 0,
+  shields: [],
 };
 
 const settings = {
@@ -245,6 +288,11 @@ const settings = {
       );
     }
   }
+
+  for (let i = 1; i < 4; i++) {
+    const y = canvas.height - 150;
+    state.shields.push(new Shield(175 * i, y));
+  }
 })();
 
 function handleObjects() {
@@ -262,12 +310,21 @@ function handleObjects() {
     enemy.update();
     enemy.draw();
   }
+
+  for (let i = 0; i < state.shields.length; i++) {
+    const shield = state.shields[i];
+    shield.update();
+    shield.draw();
+  }
 }
 
 const whereNotDestroyed = (arr) => arr.filter((val) => !val.destroy);
 function cleanupObjects() {
   state.projectiles = whereNotDestroyed(state.projectiles);
   state.enemies = whereNotDestroyed(state.enemies);
+  state.shields.forEach((shield) => {
+    shield.parts = whereNotDestroyed(shield.parts);
+  });
 }
 
 (function animate() {
