@@ -192,12 +192,11 @@ class Projectile {
 }
 
 class Enemy {
-  constructor(x, y, row) {
+  constructor(x, y) {
     this.x = x;
     this.y = y;
     this.w = settings.enemy.w;
     this.h = settings.enemy.h;
-    this.row = row;
     this.destroy = false;
     this.speedX = 0;
     this.speedY = 0;
@@ -206,10 +205,6 @@ class Enemy {
   }
 
   update() {
-    if (state.frame % (this.row + 50) === 0) {
-      this.x += this.speedX;
-      this.y += this.speedY;
-    }
     if (this.currentCooldown === 0) {
       if (state.frame % 50 === 0 && Math.random() < 0.015) {
         state.projectiles.push(
@@ -284,7 +279,7 @@ const settings = {
     const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
     for (let j = 0; j < 11; j++) {
       state.enemies.push(
-        new Enemy(j * w + j * gapX + offsetX, i * h + i * gapY + offsetY, i)
+        new Enemy(j * w + j * gapX + offsetX, i * h + i * gapY + offsetY)
       );
     }
   }
