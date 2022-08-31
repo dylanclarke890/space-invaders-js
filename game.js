@@ -118,6 +118,7 @@ class Player {
     this.speed = 10;
     this.cooldownBetweenShots = 50;
     this.currentCooldown = 0;
+    this.destroy = false;
   }
 
   update() {
@@ -154,6 +155,16 @@ class Projectile {
   update() {
     this.y += this.speed;
     this.destroy = this.y < 0 || this.y > canvas.height;
+    if (isCircleRectColliding(this, state.player)) {
+      state.player.destroy = true;
+      this.destroy = true;
+    }
+    state.enemies.forEach((enemy) => {
+      if (isCircleRectColliding(this, enemy)) {
+        enemy.destroy = true;
+        this.destroy = true;
+      }
+    });
   }
 
   draw() {
@@ -235,9 +246,10 @@ function handleObjects() {
   }
 }
 
-const isNotDestroyed = (val) => !val.destroy;
+const whereNotDestroyed = (arr) => arr.filter((val) => !val.destroy);
 function cleanupObjects() {
-  state.projectiles = state.projectiles.filter(isNotDestroyed);
+  state.projectiles = whereNotDestroyed(state.projectiles);
+  state.enemies = whereNotDestroyed(state.enemies);
 }
 
 (function animate() {
