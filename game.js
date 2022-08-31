@@ -54,6 +54,44 @@ const mouse = {
   h: 0.1,
 };
 
+const keyboard = {
+  left: false,
+  right: false,
+  firing: false,
+};
+
+window.addEventListener("keydown", (e) => {
+  switch (e.key.toLowerCase()) {
+    case "arrowright":
+      keyboard.right = true;
+      break;
+    case "arrowleft":
+      keyboard.left = true;
+      break;
+    case "space":
+      keyboard.firing = true;
+      break;
+    default:
+      break;
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  switch (e.key.toLowerCase()) {
+    case "arrowright":
+      keyboard.right = false;
+      break;
+    case "arrowleft":
+      keyboard.left = false;
+      break;
+    case "space":
+      keyboard.firing = false;
+      break;
+    default:
+      break;
+  }
+});
+
 const setMousePosition = (e) => {
   mouse.x = e.x - (canvasPosition.left + 6);
   mouse.y = e.y - canvasPosition.top;
@@ -71,7 +109,37 @@ canvas.addEventListener("click", (e) => {
   setMousePosition(e);
 });
 
+class Player {
+  constructor() {
+    this.x = canvas.width / 2 - 20;
+    this.y = canvas.height - 50;
+    this.w = 40;
+    this.h = 20;
+    this.speed = 10;
+  }
+
+  update() {
+    if (keyboard.right) this.x += this.speed;
+    if (keyboard.left) this.x += -this.speed;
+  }
+
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
+const state = {
+  player: new Player(),
+};
+
+function handleObjects() {
+  state.player.update();
+  state.player.draw();
+}
+
 (function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  handleObjects();
   requestAnimationFrame(animate);
 })();
