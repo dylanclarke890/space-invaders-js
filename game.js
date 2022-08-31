@@ -164,10 +164,50 @@ class Projectile {
   }
 }
 
+class Enemy {
+  constructor(x, y, row) {
+    this.x = x;
+    this.y = y;
+    this.w = settings.enemy.w;
+    this.h = settings.enemy.h;
+    this.speed = 3;
+    this.row = row;
+  }
+
+  update() {}
+
+  draw() {
+    ctx.fillStyle = "green";
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
 const state = {
   player: new Player(),
   projectiles: [],
+  enemies: [],
+  frame: 0,
 };
+
+const settings = {
+  enemy: {
+    w: 30,
+    h: 30,
+    gapX: 30,
+    gapY: 20,
+    offsetX: 90,
+    offsetY: 50,
+  },
+};
+
+(function initialize() {
+  const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
+  for (let i = 0; i < 5; i++)
+    for (let j = 0; j < 11; j++)
+      state.enemies.push(
+        new Enemy(j * w + j * gapX + offsetX, i * h + i * gapY + offsetY, i)
+      );
+})();
 
 function handleObjects() {
   state.player.update();
@@ -177,6 +217,12 @@ function handleObjects() {
     const projectile = state.projectiles[i];
     projectile.update();
     projectile.draw();
+  }
+
+  for (let i = 0; i < state.enemies.length; i++) {
+    const enemy = state.enemies[i];
+    enemy.update();
+    enemy.draw();
   }
 }
 
