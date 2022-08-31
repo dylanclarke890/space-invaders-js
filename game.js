@@ -122,6 +122,8 @@ class Player {
   }
 
   update() {
+    if (this.destroy) return;
+
     if (keyboard.right) this.x += this.speed;
     if (keyboard.left) this.x += -this.speed;
     if (this.x < 0) this.x = 0;
@@ -130,7 +132,7 @@ class Player {
     if (this.currentCooldown === 0) {
       if (keyboard.firing) {
         state.projectiles.push(
-          new Projectile(this.x + this.w / 2, this.y, -10)
+          new Projectile(this.x + this.w / 2, this.y, -10, { enemies: true })
         );
         this.currentCooldown = this.cooldownBetweenShots;
       }
@@ -138,27 +140,31 @@ class Player {
   }
 
   draw() {
+    if (this.destroy) return;
     ctx.fillStyle = "white";
     ctx.fillRect(this.x, this.y, this.w, this.h);
   }
 }
 
 class Projectile {
-  constructor(x, y, speed) {
+  constructor(x, y, speed, collideWith) {
     this.x = x;
     this.y = y;
     this.r = 5;
     this.speed = speed;
     this.destroy = false;
+    this.collideWith = collideWith;
   }
 
   update() {
     this.y += this.speed;
     this.destroy = this.y < 0 || this.y > canvas.height;
-    if (isCircleRectColliding(this, state.player)) {
+    const { player, enemies } = this.collideWith;
+    if (player && isCircleRectColliding(this, state.player)) {
       state.player.destroy = true;
       this.destroy = true;
     }
+    if (!enemies) return;
     state.enemies.forEach((enemy) => {
       if (isCircleRectColliding(this, enemy)) {
         enemy.destroy = true;
@@ -196,11 +202,14 @@ class Enemy {
     }
     if (this.currentCooldown === 0) {
       if (state.frame % 50 === 0 && Math.random() < 0.015) {
-        state.projectiles.push(new Projectile(this.x + this.w / 2, this.y + this.h, 10));
+        state.projectiles.push(
+          new Projectile(this.x + this.w / 2, this.y + this.h, 10, {
+            player: true,
+          })
+        );
         this.currentCooldown = this.cooldownBetweenShots;
       }
-    }
-    else this.currentCooldown--;
+    } else this.currentCooldown--;
   }
 
   draw() {
