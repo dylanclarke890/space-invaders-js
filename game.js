@@ -185,6 +185,8 @@ class Enemy {
     this.destroy = false;
     this.speedX = 0;
     this.speedY = 0;
+    this.cooldownBetweenShots = 50;
+    this.currentCooldown = 0;
   }
 
   update() {
@@ -192,6 +194,13 @@ class Enemy {
       this.x += this.speedX;
       this.y += this.speedY;
     }
+    if (this.currentCooldown === 0) {
+      if (state.frame % 50 === 0 && Math.random() < 0.015) {
+        state.projectiles.push(new Projectile(this.x + this.w / 2, this.y + this.h, 10));
+        this.currentCooldown = this.cooldownBetweenShots;
+      }
+    }
+    else this.currentCooldown--;
   }
 
   draw() {
