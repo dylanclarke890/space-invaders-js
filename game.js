@@ -121,6 +121,8 @@ class Player {
   update() {
     if (keyboard.right) this.x += this.speed;
     if (keyboard.left) this.x += -this.speed;
+    if (this.x < 0) this.x = 0;
+    if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
   }
 
   draw() {
