@@ -61,7 +61,7 @@ const keyboard = {
 };
 
 window.addEventListener("keydown", (e) => {
-  switch (e.key.toLowerCase()) {
+  switch (e.code.toLowerCase()) {
     case "arrowright":
       keyboard.right = true;
       break;
@@ -77,7 +77,7 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("keyup", (e) => {
-  switch (e.key.toLowerCase()) {
+  switch (e.code.toLowerCase()) {
     case "arrowright":
       keyboard.right = false;
       break;
@@ -116,6 +116,8 @@ class Player {
     this.w = 40;
     this.h = 20;
     this.speed = 10;
+    this.cooldownBetweenShots = 50;
+    this.currentCooldown = 0;
   }
 
   update() {
@@ -123,6 +125,15 @@ class Player {
     if (keyboard.left) this.x += -this.speed;
     if (this.x < 0) this.x = 0;
     if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
+
+    if (this.currentCooldown === 0) {
+      if (keyboard.firing) {
+        state.projectiles.push(
+          new Projectile(this.x + this.w / 2, this.y, -10)
+        );
+        this.currentCooldown = this.cooldownBetweenShots;
+      }
+    } else this.currentCooldown--;
   }
 
   draw() {
@@ -131,13 +142,47 @@ class Player {
   }
 }
 
+class Projectile {
+  constructor(x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.r = 5;
+    this.speed = speed;
+    this.destroy = false;
+  }
+
+  update() {
+    this.y += this.speed;
+    this.destroy = this.y < 0 || this.y > canvas.height;
+  }
+
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 const state = {
   player: new Player(),
+  projectiles: [],
 };
 
 function handleObjects() {
   state.player.update();
   state.player.draw();
+
+  for (let i = 0; i < state.projectiles.length; i++) {
+    const projectile = state.projectiles[i];
+    projectile.update();
+    projectile.draw();
+  }
+}
+
+const isNotDestroyed = (val) => !val.destroy;
+function cleanupObjects() {
+  state.projectiles = state.projectiles.filter(isNotDestroyed);
 }
 
 (function animate() {
