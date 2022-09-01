@@ -232,13 +232,17 @@ class EnemyRow {
   constructor(row) {
     this.row = row;
     this.direction = "R";
+    this.destroy = false;
   }
 
   update() {
     let speedX = 0;
     let speedY = 0;
-
-    if (this.row.length === 0 || state.frame % 100 !== 0) return;
+    if (this.row.length === 0) {
+      this.destroy = true;
+      return;
+    }
+    if (state.frame % 100 !== 0) return;
     switch (this.direction) {
       case "R":
         const rightMostEnemy = this.row[this.row.length - 1];
@@ -326,6 +330,7 @@ const state = {
   enemies: [],
   frame: 0,
   shields: [],
+  won: 0,
 };
 
 const settings = {
@@ -334,8 +339,8 @@ const settings = {
     h: 30,
     gapX: 30,
     gapY: 20,
-    offsetX: 90,
-    offsetY: 50,
+    offsetX: 50,
+    offsetY: 20,
   },
 };
 
@@ -380,10 +385,36 @@ function handleObjects() {
   }
 }
 
+function handleGameState() {
+  if (state.player.destroy) state.won = -1;
+  if (state.enemies.length === 0) state.won = 1;
+}
+
+function handleLossScreen() {
+  drawText(
+    "Game Over",
+    "40px Arial",
+    "white",
+    canvas.width / 2 - 100,
+    canvas.height / 2 - 150
+  );
+}
+
+function handleWinScreen() {
+  drawText(
+    "You Won",
+    "40px Arial",
+    "white",
+    canvas.width / 2 - 100,
+    canvas.height / 2 - 200
+  );
+}
+
 const whereNotDestroyed = (arr) => arr.filter((val) => !val.destroy);
 function cleanupObjects() {
   state.projectiles = whereNotDestroyed(state.projectiles);
   state.enemies.forEach((enemy) => (enemy.row = whereNotDestroyed(enemy.row)));
+  state.enemies = whereNotDestroyed(state.enemies);
   state.shields.forEach((shield) => {
     shield.parts = whereNotDestroyed(shield.parts);
   });
@@ -391,8 +422,13 @@ function cleanupObjects() {
 
 (function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  handleObjects();
-  cleanupObjects();
+  if (state.won === 0) {
+    handleObjects();
+    cleanupObjects();
+    handleGameState();
+  } else if (state.won === -1) {
+    handleLossScreen();
+  } else handleWinScreen();
   state.frame++;
   requestAnimationFrame(animate);
 })();
