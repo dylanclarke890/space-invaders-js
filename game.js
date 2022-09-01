@@ -220,6 +220,16 @@ class Enemy {
         this.currentCooldown = this.cooldownBetweenShots;
       }
     } else this.currentCooldown--;
+
+    state.shields.forEach((shield) => {
+      shield.parts.forEach((part) => {
+        if (isRectRectColliding(this, part)) {
+          part.destroy = true;
+        }
+      });
+    });
+
+    if (isRectRectColliding(this, state.player)) state.player.destroy = true;
   }
 
   draw() {
@@ -242,7 +252,7 @@ class EnemyRow {
       this.destroy = true;
       return;
     }
-    if (state.frame % 100 !== 0) return;
+    if (state.frame % 25 !== 0) return;
     switch (this.direction) {
       case "R":
         const rightMostEnemy = this.row[this.row.length - 1];
@@ -356,8 +366,8 @@ const settings = {
     state.enemies.push(new EnemyRow(row));
   }
 
+  const y = canvas.height - 150;
   for (let i = 1; i < 4; i++) {
-    const y = canvas.height - 150;
     state.shields.push(new Shield(175 * i, y));
   }
 })();
