@@ -252,7 +252,7 @@ class EnemyRow {
       this.destroy = true;
       return;
     }
-    if (state.frame % 25 !== 0) return;
+    if (state.frame % 100 !== 0) return;
     switch (this.direction) {
       case "R":
         const rightMostEnemy = this.row[this.row.length - 1];
