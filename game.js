@@ -174,12 +174,15 @@ class Projectile {
       this.destroy = true;
     }
     if (!enemies) return;
-    state.enemies.forEach((enemy) => {
+    state.enemies.forEach((enemyRow) => {
       if (this.destroy) return;
-      if (isCircleRectColliding(this, enemy)) {
-        enemy.destroy = true;
-        this.destroy = true;
-      }
+      enemyRow.row.forEach((enemy) => {
+        if (this.destroy) return;
+        if (isCircleRectColliding(this, enemy)) {
+          enemy.destroy = true;
+          this.destroy = true;
+        }
+      });
     });
   }
 
@@ -198,13 +201,15 @@ class Enemy {
     this.w = settings.enemy.w;
     this.h = settings.enemy.h;
     this.destroy = false;
-    this.speedX = 0;
-    this.speedY = 0;
     this.cooldownBetweenShots = 50;
     this.currentCooldown = 0;
+    this.speedX = 0;
+    this.speedY = 0;
   }
 
   update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
     if (this.currentCooldown === 0) {
       if (state.frame % 50 === 0 && Math.random() < 0.015) {
         state.projectiles.push(
@@ -220,6 +225,66 @@ class Enemy {
   draw() {
     ctx.fillStyle = "green";
     ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
+class EnemyRow {
+  constructor(row) {
+    this.row = row;
+    this.direction = "R";
+  }
+
+  update() {
+    let speedX = 0;
+    let speedY = 0;
+
+    if (this.row.length === 0 || state.frame % 100 !== 0) return;
+    switch (this.direction) {
+      case "R":
+        const rightMostEnemy = this.row[this.row.length - 1];
+        if (rightMostEnemy.x + rightMostEnemy.w >= canvas.width) {
+          speedX = 0;
+          speedY = 30;
+          this.direction = "DL";
+        } else {
+          speedX = 30;
+          speedY = 0;
+        }
+        break;
+      case "L":
+        const leftMostEnemy = this.row[0];
+        if (leftMostEnemy.x <= 0) {
+          speedX = 0;
+          speedY = 30;
+          this.direction = "DR";
+        } else {
+          speedX = -30;
+          speedY = 0;
+        }
+        break;
+      case "DR":
+        speedX = 30;
+        speedY = 0;
+        this.direction = "R";
+        break;
+      case "DL":
+        speedX = -30;
+        speedY = 0;
+        this.direction = "L";
+        break;
+      default:
+        break;
+    }
+
+    this.row.forEach((enemy) => {
+      enemy.speedX = speedX;
+      enemy.speedY = speedY;
+      enemy.update();
+    });
+  }
+
+  draw() {
+    this.row.forEach((enemy) => enemy.draw());
   }
 }
 
@@ -275,13 +340,15 @@ const settings = {
 };
 
 (function initialize() {
+  const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
   for (let i = 0; i < 5; i++) {
-    const { w, h, gapX, gapY, offsetX, offsetY } = settings.enemy;
+    const row = [];
     for (let j = 0; j < 11; j++) {
-      state.enemies.push(
+      row.push(
         new Enemy(j * w + j * gapX + offsetX, i * h + i * gapY + offsetY)
       );
     }
+    state.enemies.push(new EnemyRow(row));
   }
 
   for (let i = 1; i < 4; i++) {
@@ -316,7 +383,7 @@ function handleObjects() {
 const whereNotDestroyed = (arr) => arr.filter((val) => !val.destroy);
 function cleanupObjects() {
   state.projectiles = whereNotDestroyed(state.projectiles);
-  state.enemies = whereNotDestroyed(state.enemies);
+  state.enemies.forEach((enemy) => (enemy.row = whereNotDestroyed(enemy.row)));
   state.shields.forEach((shield) => {
     shield.parts = whereNotDestroyed(shield.parts);
   });
